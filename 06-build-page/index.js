@@ -1,22 +1,37 @@
 const fs = require('fs');
 const fsPromises = require('fs/promises');
+const { dirname } = require('path');
 const path = require('path');
 const pathFolder = path.join(__dirname, 'project-dist');
 
-function createNewDir(){
-	fs.mkdir(
-	  path.join(__dirname, 'project-dist'),
-	  { recursive: true },
-	  (err) => {
-		if(err) console.log(err.message)
-		console.log('Папка создана')
+fs.mkdir(
+  path.join(__dirname, 'project-dist'),
+  { recursive: true },
+  (err) => {
+    if(err) console.log(err.message)
+    console.log('Папка создана')
     createHTML()
-	  }
-	)  
+    bildCss()
+    fs.rm(
+      path.join(__dirname, 'project-dist', 'assets'),
+      { recursive: true, force: true },
+      (err) => {
+        if(err) console.log(err.message)
+
+        fs.mkdir(
+          path.join(__dirname, 'project-dist', 'assets'),
+          { recursive: true },
+          (err) => {
+            if(err) console.log(err.message)
+            createDirForAssets()
+            copydir()
+          }
+        )
+      }
+
+    )
   }
-
-  createNewDir()
-
+)
 
 
   async function createHTML() {
@@ -43,6 +58,8 @@ function createNewDir(){
     }
   }
 
+
+function bildCss(){
 fs.readdir(
   path.join(__dirname, 'styles'),
   { withFileTypes: true },
@@ -79,3 +96,59 @@ fs.readdir(
     })
   }
 )
+}
+
+function createDirForAssets(){
+  fs.readdir(
+    path.join(__dirname, 'assets'),
+    { withFileTypes: true },
+    (err,dirs) => {
+      dirs.forEach(dir => {
+
+        fs.mkdir(
+          path.join(__dirname, 'project-dist', 'assets', dir.name),
+          { recursive: true },
+          (err) => {
+            if(err) console.log(err.message)
+          }
+        )
+      })
+    }
+  )
+}
+
+
+function copyFiles(namedir){
+fs.readdir(
+  path.join(__dirname, 'assets', namedir),
+  { withFileTypes: true },
+  (err, files) => {
+    if(err) console.log(err.message)
+
+    files.forEach(file => {
+        let inputDir = path.join(__dirname, 'assets', namedir, file.name)
+        let outputDir = path.join(__dirname, 'project-dist', 'assets', namedir, file.name)
+
+        fs.copyFile(inputDir, outputDir, (err) => {
+            if(err) console.log(err.message)
+        })
+    })
+    console.log(`Папки с файлами скопированы из assets/${namedir} в project-dist`)
+  }
+)
+}
+
+function copydir(){
+fs.readdir(
+  path.join(__dirname, 'assets'),
+  { withFileTypes: true },
+  (err,dirs) => {
+    if(err) console.log(err.message)
+    dirs.forEach(dir => {
+      if((dir.isDirectory)) {
+      console.log(dir.name)
+      copyFiles(dir.name)
+      }
+    })
+})
+}
